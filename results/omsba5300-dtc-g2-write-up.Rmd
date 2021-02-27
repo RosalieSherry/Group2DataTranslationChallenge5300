@@ -1,6 +1,6 @@
 ---
 title: "OMSBA 5300 - Data Translation Challenge - Group 2"
-author: "Chequala Fuller"
+author: "Rosalie Sherry, Lynna Tran, Vishaal Diwan, and Chequala Fuller"
 date: "2/27/2021"
 output: html_document
 ---
