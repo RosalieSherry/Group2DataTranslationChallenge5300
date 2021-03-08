@@ -20,4 +20,9 @@ think_real <- covid_data %>% filter(covidmed <= 2)
 
 vtable(think_real)
 
-covid_score <- covid_data %>% mutate(covid_score = (covidtelew + covidunaw + covidlook +covidmed))
+factor_covid <- covid_data %>% mutate(covidtelew = as.factor(covidtelew)) %>%
+  mutate(covidpaid = as.factor(covidpaid)) %>% mutate(covidlook = as.factor(covidlook)) %>% 
+  mutate(covidmed = as.factor(covidmed)) %>% mutate(covidunaw = as.factor(covidunaw))
+
+
+#covid_score <- covid_data %>% mutate(covid_score = (covidtelew + covidunaw + covidlook +covidmed))
