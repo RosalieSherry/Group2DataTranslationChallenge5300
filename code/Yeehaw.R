@@ -52,3 +52,16 @@ label(covid_data_v2) = as.list(covid_data_v2_labels[match(names(covid_data_v2), 
 vtable(covid_data_v2)
 
 covid_score <- covid_data_v2 %>% mutate(covid_score = (covidtelew + covidunaw + covidlook +covidmed))
+
+covid_score_labels <- c(year = 'survey year', serial = 'household serial number', month = 'month',
+                          hrhhid2 = 'household id, part 2', pernum = 'person number in sample unit',
+                          cpsidp = 'cpsid, person record',
+                          covidtelew = "worked remotely for pay due to covid-19 pandemic", 
+                          covidunaw = 'unable to work due to covid-19 pandemic', 
+                          covidpaid = 'received pay for hours not worked due to the covid-19 pandemic',
+                          covidlook = 'prevented from looking for work due to covid-19 pandemic',
+                          covidmed = 'did not get needed medical care for condition other than covid-19 due to the covid-19 pandemic',
+                        covid_score = 'sum of all other covid numbers, lower means less effected by covid-19 pandemic')
+label(covid_score) = as.list(covid_score_labels[match(names(covid_score), names(covid_score_labels))])
+
+vtable(covid_score)
