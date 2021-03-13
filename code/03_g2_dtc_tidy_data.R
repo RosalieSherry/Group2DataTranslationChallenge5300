@@ -33,6 +33,9 @@ displ_workers <- record_displ_workers %>%
 # DWSTAT == 97 don't know
 # DWSTAT == 98 no response
 # DWSTAT == 99 NIU
+reason_closed <- displ_workers %>%
+  filter(DWREAS == 1)
+
 reason_insuf_work <- displ_workers %>%
   filter(DWREAS == 2)
   
