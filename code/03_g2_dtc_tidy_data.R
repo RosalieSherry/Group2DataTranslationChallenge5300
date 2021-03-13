@@ -6,7 +6,7 @@ source("../code/02_g2_dtc_read_data.R")
 record_displ_workers <- cps_displ_workers %>%
   rename_with(toupper)%>%
   unite("PERID", c("HRHHID2", "PERNUM"), sep = "_")  %>%
-  select('PERID','YEAR', 'CPSIDP', 'SERIAL', 'MONTH', 'DWLOSTJOB', 'DWSTAT', 
+  select('PERID','YEAR', 'CPSIDP', 'HRHHID2', 'PERNUM', 'SERIAL', 'MONTH', 'DWLOSTJOB', 'DWSTAT', 
          'DWREAS', 'DWRECALL', 'DWBEN', 'DWHI', 
          'DWIND', 'DWOCC') %>%
   filter(YEAR > '2015')
