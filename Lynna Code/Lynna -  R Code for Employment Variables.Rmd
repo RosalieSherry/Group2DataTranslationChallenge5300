@@ -1,0 +1,132 @@
+---
+title: "Lynna Tran - Employment Variables R Notebook"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r Load Libraries}
+library(tidyverse)
+library(ipumsr)
+library(lubridate)
+
+```
+
+
+```{r Load Data Files }
+
+##Data from IPUMS
+ddi <- read_ipums_ddi("cps_00001.xml")
+data <- read_ipums_micro(ddi)
+
+```
+
+```{r Load Industry Codes}
+
+setwd("~/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Git Repository/Group2DataTranslationChallenge5300")
+
+##IndustryCodes
+RetailIndustryCodes20142019 <- read_csv('data/20142019IndustryCodes.csv')
+
+RetailIndustryCodes2020 <- read_csv('data/2020IndustryCodes.csv')
+```
+
+
+```{r Employment Datasets}
+
+work_df <- data %>% 
+  select(YEAR, SERIAL, MONTH, CPSIDP, PERNUM, EMPSTAT, LABFORCE, OCC, OCC2010, IND,
+         CLASSWKR, UHRSWORKT, UHRSWORK1, UHRSWORK2, AHRSWORKT, AHRSWORK1, AHRSWORK2,
+         DURUNEMP, WHYUNEMP, WHYPTLWK, WNLOOK, WKSTAT, MULTJOB, NUMJOB) %>%
+  rename(IndustryCode = 'IND' )
+
+
+
+jobtenure_df <- data %>%
+  select(YEAR, SERIAL, MONTH, CPSIDP, PERNUM, JTYEARS, JTYEARAGO, JTSAME, JTYPE, JTCLASS,
+         JTIND, JTOCC)
+
+```
+
+```{r Tidying up work_df}
+##Notes from tidying:
+# -Occupation data might not be as useful as industry data 
+# - I will add the usual/ actual hours worked later if we need more fluff but we might not not need it now 
+
+##choosing to mutate most columns since a filter might drop rows with data we'd need
+work_df <- work_df %>%
+  mutate(employed = EMPSTAT == 01 | EMPSTAT == 10 | EMPSTAT == 12) %>%
+  mutate(unemployed = EMPSTAT == 20 | EMPSTAT == 21 | EMPSTAT == 22 
+                       | EMPSTAT == 30 | EMPSTAT == 31 | EMPSTAT == 32 | EMPSTAT == 33
+                       | EMPSTAT == 34 | EMPSTAT == 35 | EMPSTAT == 36 ) %>%
+  mutate(labor_force = LABFORCE == 2) %>%
+  mutate(class_worker = (ifelse(CLASSWKR == 00 | CLASSWKR == 99, NA, CLASSWKR))) %>%
+  mutate(num_weeks_employed =(ifelse(DURUNEMP == 999, NA, DURUNEMP))) %>%
+  mutate(reason_unemployment =(ifelse(WHYUNEMP == 0, NA, WHYUNEMP))) %>%
+  mutate(after2020 = YEAR > 2020 ) 
+  
+ work_df <- work_df %>%
+   left_join(RetailIndustryCodes20142019, by = 'IndustryCode') %>%
+   left_join(RetailIndustryCodes2020, by = 'IndustryCode')  %>%
+   mutate(retail = !is.na(Industry.x) | !is.na(Industry.y)) %>%
+   mutate(industryname = ifelse(after2020 == TRUE, Industry.y, Industry.x ))
+ 
+ work_df <- work_df %>%
+   select(YEAR, SERIAL, MONTH, CPSIDP, PERNUM, EMPSTAT, unemployed,
+          LABFORCE, labor_force, ##  OCC, OCC2010, not sure if we'd use occupation yet
+          IndustryCode, retail, industryname, 
+         CLASSWKR, class_worker,
+         ##UHRSWORKT, UHRSWORK1, UHRSWORK2, AHRSWORKT, AHRSWORK1, AHRSWORK2, might add hours of work later
+         DURUNEMP, num_weeks_employed,
+         WHYUNEMP, reason_unemployment)
+         ##WHYPTLWK, WNLOOK, WKSTAT, MULTJOB, NUMJOB, might look into later if we need more information)
+  
+ 
+  
+#will have to merge with retail industry table to generate retail industry variable so will do that after tidying up work_df first 
+         
+
+```
+
+```{r Tidying up jobtenure_df}
+
+jobtenure_df <- jobtenure_df %>%
+  mutate(employment_year_ago = (ifelse(JTYEARAGO == 96 | JTYEARAGO == 97 |
+                                       JTYEARAGO == 98 | JTYEARAGO == 99, 
+                                       NA, JTYEARAGO))) %>%
+  mutate(same_work_lastyear = (ifelse(JTSAME == 96 | JTSAME == 97 |
+                                       JTSAME == 98 | JTSAME == 99, 
+                                       NA, JTSAME))) %>%
+  mutate(retail_lastyear = JTYPE == 02  ) %>%
+  mutate(industry_lastyear = (ifelse(JTYPE == 96 | JTYPE == 97 |
+                                       JTYPE == 98 | JTYPE == 99, 
+                                       NA, JTYPE)))  %>%
+  mutate(after2020 = YEAR > 2020 )  %>%
+  mutate(IndustryCode = JTIND)
+  
+jobtenure_df <- jobtenure_df %>%
+   left_join(RetailIndustryCodes20142019, by = 'IndustryCode' ) %>%
+   left_join(RetailIndustryCodes2020, by = 'IndustryCode')  %>%
+   mutate(retail_industry = !is.na(Industry.x) | !is.na(Industry.y)) %>%
+   mutate(industryname = ifelse(after2020 == TRUE, Industry.y, Industry.x ))
+  
+jobtenure_df <- jobtenure_df %>%
+  select(YEAR, SERIAL, MONTH, CPSIDP, PERNUM,
+  ##JTYEARS, not sure if thats going to be useful yet
+  JTYEARAGO, employment_year_ago,  JTSAME, same_work_lastyear,  JTYPE, retail_lastyear, industry_lastyear,
+  JTIND,retail_industry, industryname
+  #JTCLASS,JTOCC
+)
+
+```
+
+```{r Joining datatsets }
+
+employment_df <- inner_join(work_df, jobtenure_df, by = 'CPSIDP')
+
+```
+
