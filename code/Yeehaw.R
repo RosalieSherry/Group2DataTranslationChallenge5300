@@ -65,3 +65,7 @@ covid_score_labels <- c(year = 'survey year', serial = 'household serial number'
 label(covid_score) = as.list(covid_score_labels[match(names(covid_score), names(covid_score_labels))])
 
 vtable(covid_score)
+
+print(covid_score)
+
+write.csv(covid_score, file = "data/covid_score.csv", row.names = FALSE)
