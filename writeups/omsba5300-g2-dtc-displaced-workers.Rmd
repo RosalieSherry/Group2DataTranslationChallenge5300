@@ -1,0 +1,35 @@
+---
+title: "OMSBA 5300 - Group 2 - Data Translation Challenge - Displaced Workers"
+author: "Chequala Fuller"
+date: "3/7/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# load libraries
+```{r cars}
+source("../code/01_g2_dtc_libraries.R")
+```
+
+# read data file
+```{r}
+source("../code/02_g2_dtc_read_data")
+```
+
+# tidy data
+```{r}
+source("../code/03_g2_dtc_tidy_data")
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
