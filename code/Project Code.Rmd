@@ -1,6 +1,6 @@
 ---
 title: "Project Code"
-author: "Lynna Tran"
+author: "Group 2 "
 date: "3/14/2021"
 output: html_document
 ---
@@ -35,7 +35,21 @@ source("/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Cha
 
 ##Lala's Code 
 source("/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Git Repository/LALA-Group2DataTranslationChallenge5300-Chequala-branch/code/03_g2_dtc_tidy_data.R")
+
+
 ```
+
+```{r}
+##Lala's Code 
+source("/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Git Repository/LALA-Group2DataTranslationChallenge5300-Chequala-branch/code/03_g2_dtc_tidy_data.R")
+```
+
+```{r}
+##Rosalie's Code 
+source("/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Git Repository/LALA-Group2DataTranslationChallenge5300-Chequala-branch/code/03_g2_dtc_tidy_data.R")
+
+```
+
 
 ```{r Adding primary keys to datasets}
 displ_workers$household_personid <- paste(displ_workers$year, displ_workers$month, displ_workers$serial, displ_workers$pernum, sep="-")

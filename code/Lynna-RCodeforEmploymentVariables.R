@@ -1,20 +1,20 @@
 ##Employment Variables
 
-library(tidyverse)
-library(ipumsr)
-library(lubridate)
+##library(tidyverse)
+#library(ipumsr)
+#library(lubridate)
 
 
 ##Data from IPUMS
-ddi <- read_ipums_ddi("/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Lynna-Data/cps_00001.xml")
+ddi <- read_ipums_ddi("/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Git Repository/Group2DataTranslationChallenge5300/rawdata/LynnaCPSfiles/cps_00001.xml")
 
 data <- read_ipums_micro(ddi) 
 
 
 ##IndustryCodes
-RetailIndustryCodes20142019 <- read_csv('/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Git Repository/Group2DataTranslationChallenge5300/data/Lynna-Data/20142019IndustryCodes.csv')
+RetailIndustryCodes20142019 <- read_csv('/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Git Repository/Group2DataTranslationChallenge5300/data/20142019IndustryCodes.csv')
 
-RetailIndustryCodes2020 <- read_csv('/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Git Repository/Group2DataTranslationChallenge5300/data/Lynna-Data/2020IndustryCodes.csv')
+RetailIndustryCodes2020 <- read_csv('/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Git Repository/Group2DataTranslationChallenge5300/data/2020IndustryCodes.csv')
 
 
 data <-data %>%

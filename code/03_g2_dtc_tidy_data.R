@@ -8,8 +8,8 @@ record_displ_workers <- cps_displ_workers %>%
          'dwreas', 'dwrecall', 'dwben', 'dwhi', 'dwind', 'dwocc') %>%
   filter(year > '2015')
 
-record_displ_workers <- labeltable(record_displ_workers)
-vtable(record_displ_workers)
+##record_displ_workers <- labeltable(record_displ_workers)
+##vtable(record_displ_workers)
 
 #change all N/A's to zeros
 record_displ_workers[is.na(record_displ_workers)] = 0
