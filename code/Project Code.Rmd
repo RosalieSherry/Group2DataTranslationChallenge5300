@@ -23,7 +23,7 @@ library(jtools)
 library(scales)
 library(stringr)
 library(ggplot2)
-
+library(Hmisc)
 
 
 ```
@@ -31,36 +31,120 @@ library(ggplot2)
 ```{r Load source code}
 
 ##Lynna's Code 
-source("/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Git Repository/Group2DataTranslationChallenge5300/LynnaCode/Lynna-RCodeforEmploymentVariables.R")
-
-##Lala's Code 
-source("/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Git Repository/LALA-Group2DataTranslationChallenge5300-Chequala-branch/code/03_g2_dtc_tidy_data.R")
-
-
+source("/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Git Repository/Group2DataTranslationChallenge5300/code/Lynna-2RCodeforEmploymentVariables.R")
 ```
 
-```{r}
+```{r Load source code}
 ##Lala's Code 
-source("/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Git Repository/LALA-Group2DataTranslationChallenge5300-Chequala-branch/code/03_g2_dtc_tidy_data.R")
+source("/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Git Repository/Group2DataTranslationChallenge5300/code/03_g2_dtc_tidy_data.R")
 ```
 
-```{r}
+```{r Load source code}
 ##Rosalie's Code 
-source("/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Git Repository/LALA-Group2DataTranslationChallenge5300-Chequala-branch/code/03_g2_dtc_tidy_data.R")
+source("/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Git Repository/Group2DataTranslationChallenge5300/code/Yeehaw.R")
 
 ```
+
 
 
 ```{r Adding primary keys to datasets}
+employment_df$household_personid <- paste(employment_df$YEAR, employment_df$MONTH, employment_df$SERIAL, employment_df$PERNUM, sep="-")
+
+
 displ_workers$household_personid <- paste(displ_workers$year, displ_workers$month, displ_workers$serial, displ_workers$pernum, sep="-")
 
-
+covid_score$household_personid <- paste(covid_score$year, covid_score$month, covid_score$serial, covid_score$pernum, sep="-")
 
 ```
 
 
 
-```{r cars}
+```{r joining datasets }
+
+employment_displaced_df <- employment_df %>%
+  full_join(displ_workers, by = 'household_personid')
+
+
+vtable(employment_displaced_df)
+##%>%
+  ##select(-c(YEAR.x, pernum.x, serial.x, month.x, year.y, serial.y, month.y, hrhhid2,
+    ##        pernum.y)) %>%
+  
+
+##group_df <- rename(group_df, covid_hwtfinl = 'hwtfinl')
+```
+
+
+```{r group by month to get a monthly statistic}
+
+month_group_df <- employment_displaced_df %>%
+  select(YEAR, MONTH, employed, retail) %>%
+  mutate(retail_noNA = ifelse(is.na(retail), FALSE, TRUE))
+month_group_df$yearmo <- paste(month_group_df$YEAR, month_group_df$MONTH, sep="-")
+##will have to check whether the year/month variable matches up -- it should!
+
+
+month_group_count <- month_group_df %>%
+count(YEAR, MONTH, yearmo)
+
+
+##month_group_df[is.na(month_group_df$retail)] = FALSE
+
+
+month_group_df <- month_group_df %>%
+  select(YEAR, MONTH, yearmo, employed, retail_noNA) %>%
+  mutate(employed_binary = ifelse(employed == TRUE, 1, 0)) %>%
+  mutate(retail_binary = ifelse(retail_noNA == TRUE, 1, 0)) %>%
+  group_by(YEAR, MONTH, yearmo) %>% 
+  summarise(Employment = sum(employed_binary), Retail = sum(retail_binary)) ##%>%
+ ## summarise(Retail = sum((retail_binary)))
+  ##still need an percentage in retail)
+
+month_group_stats <- month_group_count %>%
+  left_join(month_group_df, by =  'yearmo') %>%
+  mutate(employment_rate = (Employment / n)*100 ) %>%
+  mutate(retailemployment_rate = (Retail/n)*100) %>%
+  mutate(afterCovid = (yearmo > '2020-3' | yearmo >= '2020-10')) %>%
+  filter(yearmo != 'NA-NA')
+#   
+##will need to check if its only employed people with retail jobs  
+
+
+```
+
+```{r}
+
+employment_regression <- lm(employment_rate ~ Retail  +afterCovid, data = month_group_stats)
+
+summary(employment_regression)
+##plot_coefs(employment_regression)
+
+```
+
+
+
+
+
+
+```{r}
+
+first_regression_model <- lm(RetailEmployment ~ indname.x + year.x + retail.x + unemployed, data = month_group_df)
+
+plot_coefs(first_regression_model)
+
+```
+
+```{r COVID Data}
+##Question 3 : r covid variables – compared to our demographics
+
+##We can answer a question like : Women has been less affected by COVID therefore they should be targets 
+
+group_df <- employment_df %>%
+  full_join(displ_workers, by = 'household_personid') %>%
+  full_join(covid_score, by = 'household_personid' ) %>%
+  select(-c(YEAR.x, pernum.x, serial.x, month.x, year.y, serial.y, month.y, hrhhid2,
+            pernum.y)) %>%
+  rename(covid_hwtfinl = 'hwtfinl')
 
 ```
 
@@ -72,4 +156,4 @@ You can also embed plots, for example:
 
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
