@@ -12,10 +12,10 @@ data <- read_ipums_micro(ddi)
 
 
 ##IndustryCodes
-RetailIndustryCodes20142019 <- read_csv('/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Git Repository/Group2DataTranslationChallenge5300/data/20142019IndustryCodes.csv')
+##RetailIndustryCodes20142019 <- read_csv('/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Git Repository/Group2DataTranslationChallenge5300/data/20142019IndustryCodes.csv')
 
-RetailIndustryCodes2020 <- read_csv('/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Git Repository/Group2DataTranslationChallenge5300/data/2020IndustryCodes.csv')
-
+##RetailIndustryCodes2020 <- read_csv('/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Git Repository/Group2DataTranslationChallenge5300/data/2020IndustryCodes.csv')
+RetailIndustryCodes <- read_csv('/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Git Repository/Group2DataTranslationChallenge5300/data/indnames.csv')
 
 data <-data %>%
   filter(!is.na(HWTFINL))
@@ -25,7 +25,7 @@ work_df <- data %>%
   select(YEAR, SERIAL, MONTH, CPSIDP, PERNUM, HWTFINL, EMPSTAT, LABFORCE, OCC, OCC2010, IND,
          CLASSWKR, UHRSWORKT, UHRSWORK1, UHRSWORK2, AHRSWORKT, AHRSWORK1, AHRSWORK2,
          DURUNEMP, WHYUNEMP, WHYPTLWK, WNLOOK, WKSTAT, MULTJOB, NUMJOB) %>%
-  rename(IndustryCode = 'IND' )
+  rename(ind = 'IND' )
 
 
 
@@ -47,20 +47,22 @@ work_df <- work_df %>%
   mutate(labor_force = LABFORCE == 2) %>%
   mutate(class_worker = (ifelse(CLASSWKR == 00 | CLASSWKR == 99, NA, CLASSWKR))) %>%
   mutate(num_weeks_employed =(ifelse(DURUNEMP == 999, NA, DURUNEMP))) %>%
-  mutate(reason_unemployment =(ifelse(WHYUNEMP == 0, NA, WHYUNEMP))) %>%
-  mutate(after2020 = YEAR > 2020 ) 
+  mutate(reason_unemployment =(ifelse(WHYUNEMP == 0, NA, WHYUNEMP))) ##%>%
+ ##mutate(after2020 = YEAR > 2020 ) 
+  ##mutate(postcovid = YEAR > 2020 ) 
 
 work_df <- work_df %>%
-  left_join(RetailIndustryCodes20142019, by = 'IndustryCode') %>%
-  left_join(RetailIndustryCodes2020, by = 'IndustryCode')  %>%
-  mutate(retail = !is.na(Industry.x) | !is.na(Industry.y)) %>%
-  mutate(work_industryname = ifelse(after2020 == TRUE, Industry.y, Industry.x ))
+  ##left_join(RetailIndustryCodes20142019, by = 'IndustryCode') %>%
+  ##left_join(RetailIndustryCodes2020, by = 'IndustryCode')  %>%
+  left_join(RetailIndustryCodes, by = 'ind')  %>%
+  mutate(retail = indname == 'Retail Trade')
+  ##mutate(work_industryname = ifelse(after2020 == TRUE, Industry.y, Industry.x ))
 
 work_df <- work_df %>%
   select(YEAR, SERIAL, MONTH, CPSIDP, PERNUM, HWTFINL,
          EMPSTAT, unemployed,
          LABFORCE, labor_force, ##  OCC, OCC2010, not sure if we'd use occupation yet
-         IndustryCode, retail, work_industryname, 
+         ind, indname.x, retail,## work_industryname, 
          CLASSWKR, class_worker,
          ##UHRSWORKT, UHRSWORK1, UHRSWORK2, AHRSWORKT, AHRSWORK1, AHRSWORK2, might add hours of work later
          DURUNEMP, num_weeks_employed,
@@ -83,21 +85,24 @@ jobtenure_df <- jobtenure_df %>%
   mutate(industry_lastyear = (ifelse(JTYPE == 96 | JTYPE == 97 |
                                        JTYPE == 98 | JTYPE == 99, 
                                      NA, JTYPE)))  %>%
-  mutate(after2020 = YEAR > 2020 )  %>%
-  mutate(IndustryCode = JTIND)
+  ##mutate(after2020 = YEAR > 2020 )  %>%
+  mutate(ind = JTIND)
 
 jobtenure_df <- jobtenure_df %>%
-  left_join(RetailIndustryCodes20142019, by = 'IndustryCode' ) %>%
-  left_join(RetailIndustryCodes2020, by = 'IndustryCode')  %>%
-  mutate(retail_industry = !is.na(Industry.x) | !is.na(Industry.y)) %>%
-  mutate(jt_industryname = ifelse(after2020 == TRUE, Industry.y, Industry.x ))
+  ##left_join(RetailIndustryCodes20142019, by = 'IndustryCode' ) %>%
+  ##left_join(RetailIndustryCodes2020, by = 'IndustryCode')  %>%
+  left_join(RetailIndustryCodes, by = 'ind')  %>%
+  mutate(retail = indname == 'Retail Trade')
+  ##mutate(retail_industry = !is.na(Industry.x) | !is.na(Industry.y)) %>%
+  ##mutate(jt_industryname = ifelse(after2020 == TRUE, Industry.y, Industry.x ))
 
 jobtenure_df <- jobtenure_df %>%
   select(YEAR, SERIAL, MONTH, CPSIDP, PERNUM,
          HWTFINL,
          ##JTYEARS, not sure if thats going to be useful yet
          JTYEARAGO, employment_year_ago,  JTSAME, same_work_lastyear,  JTYPE, retail_lastyear, industry_lastyear,
-         JTIND,retail_industry, jt_industryname)
+         JTIND, indname, retail)
+         ##retail_industry, jt_industryname)
          #JTCLASS,JTOCC
 
 ##adding primary key to do joins 
@@ -107,14 +112,18 @@ work_df$household_personid <- paste(work_df$YEAR, work_df$MONTH, work_df$SERIAL,
 
 jobtenure_df$household_personid <- paste(jobtenure_df$YEAR, jobtenure_df$MONTH, jobtenure_df$SERIAL, jobtenure_df$PERNUM, sep="-")
 
-employment_df <- inner_join(work_df, jobtenure_df, by = 'household_personid') %>%
+employment_df <- full_join(work_df, jobtenure_df, by = 'household_personid') %>%
   select(YEAR.x, SERIAL.x, MONTH.x, SERIAL.x, PERNUM.x, household_personid,
          HWTFINL.x, ##shared variables
          ##work_df variables
          unemployed, 
-         labor_force, IndustryCode, retail, work_industryname, 
+         labor_force, ##IndustryCode, retail, ##work_industryname, 
+         indname.x, retail.x, 
          class_worker, num_weeks_employed, reason_unemployment,
          ##jobtenure_df variables
          employment_year_ago, same_work_lastyear, 
-         retail_lastyear, industry_lastyear, retail_industry, jt_industryname)
+         retail_lastyear, industry_lastyear,
+         ##indname.y,
+         retail.x)
+         #retail_industry, jt_industryname)
 
