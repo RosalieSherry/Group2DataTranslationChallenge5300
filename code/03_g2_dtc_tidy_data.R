@@ -4,15 +4,19 @@ source("../code/02_g2_dtc_read_data.R")
 
 # tidy data for years 2016-2021 only, sort by person ID (PERID) made up by HRHHID2_PERNUM
 record_displ_workers <- cps_displ_workers %>%
-  select('year', 'cpsidp', 'hrhhid2', 'pernum', 'serial', 'month', 'dwlostjob', 'dwstat', 
-         'dwreas', 'dwrecall', 'dwben', 'dwhi', 'dwind', 'dwocc') %>%
-  filter(year > '2015')
+  filter(cpsidp != 0 ) %>%
+  filter(year > '2015') %>%
+  filter(!is.na(hwtfinl)) %>%
+  select('year',  'pernum', 'serial', 'month', 'dwlostjob', 'dwstat', 
+         'dwreas', 'dwrecall', 'dwben', 'dwhi', 'dwind', 'dwocc', 'hwtfinl') 
+  
 
-record_displ_workers <- labeltable(record_displ_workers)
-vtable(record_displ_workers)
+
+##record_displ_workers <- labeltable(record_displ_workers)
+##vtable(record_displ_workers)
 
 #change all N/A's to zeros
-record_displ_workers[is.na(record_displ_workers)] = 0
+##record_displ_workers[is.na(record_displ_workers)] = 0
   
 displ_workers <- record_displ_workers %>%
 # displaced workers who lost or left their job
@@ -51,10 +55,20 @@ displ_workers <- record_displ_workers %>%
       dwreas == 2 ~ 'Insufficient Work',
       dwreas == 3 ~ 'Position Abolished',
       dwreas == 4 ~ 'Seasonal Job Complete',
-      dwreas == 5 ~ 'Seasonal Job Complete',
+      dwreas == 5 ~ 'Self-operated business failed',
       dwreas == 6 ~ 'Other',
       dwreas == 96 ~ 'Null',
       dwreas == 97 ~ 'Null',
       dwreas == 98 ~ 'Null',
       dwreas == 99 ~ 'Null'))
+
+##testing out primary key 
+# cps_displ_workers$household_personid <- paste(cps_displ_workers$year, cps_displ_workers$month, cps_displ_workers$serial, cps_displ_workers$pernum, sep="-")
+# 
+# record_displ_workers$household_personid <- paste(record_displ_workers$year, record_displ_workers$month, record_displ_workers$serial, record_displ_workers$pernum, sep="-")
+# 
+# 
+# 
+# displ_workers$household_personid <- paste(displ_workers$year, displ_workers$month, displ_workers$serial, displ_workers$pernum, sep="-")
+
 

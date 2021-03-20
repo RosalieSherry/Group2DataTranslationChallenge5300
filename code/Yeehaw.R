@@ -5,9 +5,13 @@ library(car)
 library(vtable)
 library(Hmisc)
 
-cps_00002 <- read_dta("data/cps_00002.dta")
+cps_00002 <- read_dta("/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Git Repository/Group2DataTranslationChallenge5300/rawdata/cps_00002.dta")
 
-covid_data <- cps_00002 %>% select(-c(hwtfinl, asecflag, asecwt, asecwth, wtfinl, hrhhid, cpsid) ) %>% filter(year == 2020)
+cps_00002 <-cps_00002 %>%
+  filter(!is.na(hwtfinl))
+
+
+covid_data <- cps_00002 %>% select(-c(asecflag, asecwt, asecwth, wtfinl, hrhhid, cpsid) ) %>% filter(year == 2020)
 
 covid_data <- covid_data %>% na.omit()
 
