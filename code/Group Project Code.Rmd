@@ -1,16 +1,14 @@
-
 ---
-title: "Project Code"
-author: 'Group 2 '
-date: "3/14/2021"
-output:
-  html_document: default
-  '': default
+title: "Group 2 - Data Translation ChallegProject Code"
+author: "Lynna Tran"
+date: "3/19/2021"
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
 
 ```{r Load Libraries}
 library(tidyverse)
@@ -300,114 +298,134 @@ ggplot(data = month_group_stats, aes( x= yearmo, y = retailemployment_rate )) + 
 ```
 
 
-```{r Employment Regression - Before COVID Individual level}
 
-individual_df <- employment_displaced_df %>%
-  select(YEAR, MONTH, employed, retail, indname) %>%
+
+```{r employment_displaced_df}
+
+##Regress Employment on a constant variable 
+##:Regress employment on NO predictors and just the intercept
+
+
+binaryemployedretail_df <- employment_displaced_df %>%
+  filter(year >= 2018) %>%
+  select(YEAR, MONTH,household_personid, employed, retail, indname) %>%
   mutate(employed_binary = ifelse(employed == TRUE, 1, 0)) %>%
   mutate(retail_noNA = ifelse(is.na(retail) | retail == FALSE, FALSE, TRUE)) %>%
   mutate(retail_binary = ifelse(retail_noNA == TRUE, 1, 0)) %>%
   mutate(retail_employed = employed_binary == 1 & retail_binary == 1) %>%
-  mutate(retail_employed_binary = ifelse(retail_employed == TRUE, 1, 0))
-  
-
-##month_group_df$yearmo <- paste(month_group_df$YEAR, month_group_df$MONTH, sep="-")
-
-BeforeCovid_individual_df <- individual_df %>%
-  ##filter(YEAR != '2021') %>%
-  filter((YEAR == '2020'  & (MONTH == 3 | MONTH == 4 | MONTH == 6 | MONTH == 5 |
-                            MONTH == 6| MONTH == 7 | MONTH == 8 | MONTH == 8  | MONTH == 9 |
-                            MONTH == 10 | MONTH == 11| MONTH == 12 ) | YEAR == '2021') )
+  mutate(retail_employed_binary = ifelse(retail_employed == TRUE, 1, 0)) ##%>%
+  ##mutate(employment_mean = mean(employed_binary))
 
 
-BeforeCovid_EmploymentIndividualRegression <- lm(retail ~ employed, 
-                                   data = BeforeCovid_individual_df)
-  
-#   
-# BeforeCovid_Employmentregression <- lm(RetailEmployed ~ Employment, 
-#                                    data = BeforeCovid_monthgroup)
+# dim(binaryemployedretail_df)
+# ##4397806 rows 
+# 
+##binaryemployedretail_groupdf <-  binaryemployedretail_df %>%
+  ##group_by(employed) %>%
+  ##summarise(mutate(employment_mean = mean(employed_binary)))
 
-summary(BeforeCovid_EmploymentIndividualRegression)
 
-ggplot(data = BeforeCovid_EmploymentIndividualRegression, aes( x= retail, y = employed)) + geom_point() + geom_smooth(method= 'lm')
+
+mean_employmentregression <- lm(employed_binary ~ 1, data = binaryemployedretail_df)
+
+summary(mean_employmentregression)
+
+
+ggplot(data = mean_employmentregression, aes( x= employed_binary, y = 1)) + geom_point() + geom_smooth(method= 'lm')
 
 
 ##plot_coefs(employment_regression)
 
 ##histogram
 
-hist(rstandard(BeforeCovid_EmploymentIndividualRegression), 
+hist(rstandard(mean_employmentregression), 
+     xlab = "Standardized residuals", main = 'Standardized Residuals of ')
+
+```
+
+```{r}
+# 2.	Predict employment rate estimate for retail
+# •	The mean of the average is the unemployment rate
+
+
+
+
+employment_on_retailregression <- lm(employed_binary ~ 1 + retail_noNA, data = binaryemployedretail_df)
+
+
+summary(employment_on_retailregression)
+
+
+ggplot(data = employment_on_retailregression, aes( x= employed_binary)) + geom_point() + geom_smooth(method= 'lm')
+
+
+
+hist(rstandard(employment_on_retailregression), 
      xlab = "Standardized residuals", main = 'Standardized Residuals of ')
 
 
 ```
 
+```{r}
+# 3.	ADD pre or post COVID interaction term to the model (industry * beforeCOVID) – this will tell how COVID has changed the differences in employment rate by industry
+# o	Better idea to do month interactions instead of pre and post COVID
+
+binaryemployedretailCOVID_df<- binaryemployedretail_df
+
+binaryemployedretailCOVID_df$yearmo <- paste(binaryemployedretailCOVID_df$YEAR, binaryemployedretailCOVID_df$MONTH, sep="-")
+
+binaryemployedretailCOVID_df<- binaryemployedretailCOVID_df %>%
+  mutate(afterCovid = (yearmo > '2020-3' | yearmo >= '2020-10'))
+
+employmentretailregressionCOVID <- lm(employed_binary ~ 1 + (retail_noNA * afterCovid), data = binaryemployedretailCOVID_df)
 
 
-```{r Employment Regression - After COVID Individual level}
+summary(employmentretailregressionCOVID)
+
+
+ggplot(data = employmentretailregressionCOVID, aes( x= employed_binary, y = (retail_noNA * afterCovid))) + geom_point() + geom_smooth(method= 'lm')
 
 
 
-##month_group_df$yearmo <- paste(month_group_df$YEAR, month_group_df$MONTH, sep="-")
-
-AfterCovid_individual_df <- individual_df %>%
-  filter((YEAR == '2020' & (MONTH == 1 | MONTH == 2 | MONTH == 3 ) | (YEAR <= '2020' & YEAR != '2021')) )
-
-
-AfterCovid_EmploymentIndividualRegression <- lm(retail_binary ~ employed_binary, 
-                                   data = AfterCovid_individual_df)
-  
-#   
-# BeforeCovid_Employmentregression <- lm(RetailEmployed ~ Employment, 
-#                                    data = BeforeCovid_monthgroup)
-
-summary(AfterCovid_EmploymentIndividualRegression)
-
-ggplot(data = AfterCovid_EmploymentIndividualRegression, aes( x= retail_binary, y = employed_binary)) + geom_point() + geom_smooth(method= 'lm')
-
-
-##plot_coefs(employment_regression)
-
-##histogram
-
-hist(rstandard(BeforeCovid_EmploymentIndividualRegression), 
+hist(rstandard(employmentretailregressionCOVID), 
      xlab = "Standardized residuals", main = 'Standardized Residuals of ')
 
-```
-
-
 
 ```
-
-
-
-```{r group by month to get a otherindustry monthly statistic}
-
+```{r plotting other industries}
+ 
 otherindustries_df <- employment_displaced_df %>%
   filter(year >= 2018) %>%
   filter(!is.na(indname)) %>%
-  select(YEAR, MONTH, employed, indname) %>%
+  select(YEAR, MONTH, employed, retail,indname) %>%
   mutate(employed_binary = ifelse(employed == TRUE, 1, 0)) %>%
-  mutate(artind = ifelse(employed_binary == 1 & indname == "Arts, Entertainment, and Recreation, and Accommodation and Food Services", 1,0))%>%
-  mutate(constructionind = ifelse(employed_binary == 1 & indname == "Construction", 1,0)) %>%
-  mutate(eduind = ifelse(employed_binary == 1 & indname == "Educational Services, and Health Care and Social Assistance", 1,0)) %>%
-  mutate(financeind = ifelse(employed_binary == 1 & indname == "Finance and Insurance, and Real Estate and Rental and Leasing", 1,0)) %>%
-  mutate(infoind =  ifelse(employed_binary == 1 & indname == "Information", 1,0)) %>%
-  mutate(mfind =ifelse(employed_binary == 1 & indname == "Manufacturing", 1,0)) %>%
+  mutate(artind = ifelse( indname == "Arts, Entertainment, and Recreation, and Accommodation and Food Services", 1,0))%>%
+  mutate(constructionind = ifelse(indname == "Construction", 1,0)) %>%
+  mutate(eduind = ifelse(indname == "Educational Services, and Health Care and Social Assistance", 1,0)) %>%
+  mutate(financeind = ifelse(indname == "Finance and Insurance, and Real Estate and Rental and Leasing", 1,0)) %>%
+  mutate(infoind =  ifelse(indname == "Information", 1,0)) %>%
+  mutate(mfind =ifelse(indname == "Manufacturing", 1,0)) %>%
   mutate(militaryind = ifelse(indname == "Military", 1,0)) %>%
-  mutate(otherind = ifelse(employed_binary == 1 & indname == "Other Services, Except Public Administration", 1,0)) %>%
-  mutate(proind =  ifelse(employed_binary == 1 & indname == "Professional, Scientific, and Management, and Administrative and Waste Management Services", 1,0)) %>%
-  mutate(publicind =  ifelse(employed_binary == 1 & indname == "Public Administration", 1,0)) %>%
-  mutate(retailind = ifelse(employed_binary == 1 & indname == "Retail Trade", 1,0)) %>%
-  mutate(transportind = ifelse(employed_binary == 1 & indname == "Transportation and Warehousing, and Utilities", 1,0)) %>%
-  mutate(wsind = ifelse(employed_binary == 1 & indname == "Wholesale Trade", 1,0))
+  mutate(otherind = ifelse(indname == "Other Services, Except Public Administration", 1,0)) %>%
+  mutate(proind =  ifelse(indname == "Professional, Scientific, and Management, and Administrative and Waste Management Services", 1,0)) %>%
+  mutate(publicind =  ifelse(indname == "Public Administration", 1,0)) %>%
+  mutate(retailind = ifelse(indname == "Retail Trade", 1,0)) %>%
+  mutate(transportind = ifelse(indname == "Transportation and Warehousing, and Utilities", 1,0)) %>%
+  mutate(wsind = ifelse(indname == "Wholesale Trade", 1,0)) %>%
+  mutate(retail_noNA = ifelse(is.na(retail) | retail == FALSE, FALSE, TRUE)) %>%
+  mutate(retail_binary = ifelse(retail_noNA == TRUE, 1, 0))
+
+
+otherindustries_df$yearmo <- paste(otherindustries_df$YEAR, otherindustries_df $MONTH, sep="-")
+
+
 
 otherindustries_df$yearmo <- paste(otherindustries_df$YEAR, otherindustries_df $MONTH, sep="-")
 
   otherindustries_count <- otherindustries_df %>%
 count(indname)
 
-otherindustries_df <- otherindustries_df %>%
+otherindustries_count <- otherindustries_df %>%
   group_by(YEAR, MONTH, yearmo) %>%
   summarise(Employment = sum(employed_binary),
             art_count = sum(artind),
@@ -425,7 +443,7 @@ otherindustries_df <- otherindustries_df %>%
           )
 
 
-otherindustries_df_stats <- otherindustries_df %>%
+otherindustries_df_stats <- otherindustries_count %>%
   left_join(month_group_count, by =  'yearmo') %>%
   mutate(employment_rate = (Employment / n)*100 ) %>%
   mutate(art_rate = (art_count / n)*100 ) %>%
@@ -444,11 +462,8 @@ otherindustries_df_stats <- otherindustries_df %>%
   filter(yearmo != 'NA-NA')
 
 
-```
 
 
-```{r plotting other industries}
- 
 ggplot(data = otherindustries_df_stats, aes( x = yearmo)) +
                                       geom_point(aes(y = art_rate), color = "darkred") +
                                       geom_point(aes(y = construction_rate), color = "red") +
@@ -466,102 +481,44 @@ ggplot(data = otherindustries_df_stats, aes( x = yearmo)) +
 
 ```
 
-```{r BeforeCovid Other Industries Regression }
-BeforeCovid_otherindustries <- otherindustries_df %>%
-  filter(yearmo < '2020-3') %>%
-  filter(yearmo != '2020-10' & yearmo != '2020-11' & yearmo != '2020-12') %>%
-  filter(yearmo != 'NA-NA')
-
-BeforeCovid_OtherIndRegression <- lm(retail_count ~ art_count + construction_count + edu_count
-                                 + finance_count + info_count + military_count + other_count
-                                 + pro_count + public_count + transport_count 
-                                 + ws_count  + Employment, data = BeforeCovid_otherindustries)
-
-summary(BeforeCovid_OtherIndRegression)
-
-ggplot(data = BeforeCovid_OtherIndRegression, aes( x= retail_count, y = Employment)) + geom_point() + geom_smooth()
+```{r Other Industies}
+# o	Another way to do that is to regress binary indicators for industry
+# 	Intercept – will be employment rate for reference group
+# 	Coefficients – for all others will be the difference in employment rate for all other industries compared to the reference group
 
 
-hist(rstandard(BeforeCovid_OtherIndRegression), 
+
+otherindustries_df<- otherindustries_df %>%
+  mutate(afterCovid = (yearmo > '2020-3' | yearmo >= '2020-10'))
+
+# otherindustriesregressionCOVID <- lm(employed_binary ~ 1 + retail_noNA + afterCovid + artind +
+#                                   constructionind + eduind
+#                                  + financeind + infoind + otherind
+#                                  + proind + publicind + transportind
+#                                  + wsind, data = otherindustries_df)
+# 
+# 
+# summary(otherindustriesregressionCOVID)
+
+
+otherindustriesregressionCOVID <- lm(employed_binary ~ 1 + (retail_noNA * afterCovid) + 
+                                    (artind *    afterCovid) +
+                                  (constructionind * afterCovid) + (eduind * afterCovid)
+                                 + (financeind *  afterCovid)  + (infoind * afterCovid) + 
+                                   (otherind * afterCovid)
+                                 + (proind *  afterCovid) + (publicind * afterCovid) +
+                                   (transportind * afterCovid)
+                                 + (wsind * afterCovid), data = otherindustries_df)
+
+
+summary(otherindustriesregressionCOVID)
+
+ggplot(data = otherindustriesregressionCOVID, aes( x= employed_binary))) + geom_point() + geom_smooth(method= 'lm')
+
+
+
+hist(rstandard(otherindustriesregressionCOVID), 
      xlab = "Standardized residuals", main = 'Standardized Residuals of ')
 
-```
-```{r  After Covid Industries Regression }
-AfterCovid_otherindustries <- otherindustries_df %>%
-  filter( yearmo >'2020-10' ) %>%
-  filter(yearmo != '2020-3' & yearmo != '2020-1' & yearmo != '2020-2'   ) %>%
-  filter(yearmo != 'NA-NA')
-
-
-AfterCovid_OtherIndRegression <- lm(retail_count ~ art_count + construction_count + edu_count
-                                 + finance_count + info_count + military_count + other_count
-                                 + pro_count + public_count + transport_count 
-                                 + ws_count + Employment , data = AfterCovid_otherindustries)
-
-summary(AfterCovid_OtherIndRegression)
-
-ggplot(data = AfterCovid_OtherIndRegression, aes( x= retail_count, y = Employment)) + geom_point() + geom_smooth()
-
-#doesnt work because of nulls 
-##hist(rstandard(AfterCovid_OtherIndRegression), 
- ##    xlab = "Standardized residuals", main = 'Standardized Residuals of ')
-
 
 ```
-
-```{r testing selected industries}
-AfterCovid_OtherIndSelectedRegression <- lm(retail_count ~ Employment + art_count + construction_count + edu_count
-                                 + finance_count + info_count + military_count + other_count
-                                   , data = AfterCovid_otherindustries)
-
-summary(AfterCovid_OtherIndSelectedRegression)
-
-ggplot(data = AfterCovid_OtherIndSelectedRegression, aes( x= retail_count, y = Employment)) + geom_point() + geom_smooth()
-
-# hist(rstandard(AfterCovid_OtherIndSelectRegression), 
-#    xlab = "Standardized residuals", main = 'Standardized Residuals of ')
-```
-
-
-
-```{r COVID Data}
-##Question 3 : r covid variables – compared to our demographics
-
-##We can answer a question like : Women has been less affected by COVID therefore they should be targets 
-
-covidemployment_df <- employment_displaced_df 
-
-person_covid <- covid_score %>%
-  left_join(covidemployment_df, by = 'household_personid' ) %>%
-  left_join(df, by = 'household_personid'  )
-
-```
-
-
-
-
-```{r COVID REGRESSION DATA}
-
-covid_regression <- lm(covid_score ~ age + + educ99 + female + employed , data = person_covid)
-##take out race since thats not a quantitative value 
-
-summary(covid_regression)
-
-##ggplot(data =covid_regression, aes( x= covid_score, y = employed )) + geom_point()
-##ggplot(data = covid_regression, aes( x= covid_score, y = )) + geom_point() + geom_smooth()
-
-##effect_plot(covid_regression, pred = 'covid_score', plot.points = TRUE)
-```
-
-
-```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-
-```
-
-
