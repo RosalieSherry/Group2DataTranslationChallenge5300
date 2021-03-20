@@ -1,16 +1,17 @@
 ---
-title: "Group 2 - Data Translation ChallegProject Code"
-author: "Lynna Tran"
+title: "Group 2 - Data Translation Challege Project Code"
+author: "Lynna Tran, Chequala Fuller, Rosalie Sherry, Vishaal Diwan"
 date: "3/19/2021"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, cache=FALSE, results=FALSE, warning=FALSE, comment=FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-```{r Load Libraries}
+```{r Load Libraries, echo=FALSE, results="hide", include=FALSE}
+
 library(tidyverse)
 library(ipumsr)
 library(lubridate)
@@ -29,7 +30,7 @@ library(Hmisc)
 ```
 
 
-```{r Load Lynnas Code}
+```{r Load  Lynnas Code, echo=FALSE, cache=FALSE, results=FALSE, warning=FALSE, comment=FALSE, warning=FALSE}
 
 ##Data from IPUMS
 ddi <- read_ipums_ddi("/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Git Repository/Group2DataTranslationChallenge5300/rawdata/LynnaCPSfiles/cps_00001.xml")
@@ -57,7 +58,7 @@ employment_df <- employment_variables %>%
 ```
 
 
-```{r Lalas Code}
+```{r Lalas Code, echo=FALSE}
 
 cps_displ_workers <- read_dta("../rawdata/cps_displaced_workers.dta")
 
@@ -114,7 +115,7 @@ displ_workers <- record_displ_workers %>%
 
 ```
 
-```{r Loading Vishs code }
+```{r Loading Vishs code, echo=FALSE}
 df <- read_dta('/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Git Repository/Group2DataTranslationChallenge5300/rawdata/cps_00004.dta')
 
 df <- df %>% 
@@ -156,7 +157,7 @@ df <- df %>%
 ```
 
 
-```{r Loading Roslies Code}
+```{r Loading Roslies Code, echo=FALSE}
 
 cps_00002 <- read_dta("/Users/lynnatran/Documents/MSBA/5300 - Econometrics/Data Translation Challenge/Git Repository/Group2DataTranslationChallenge5300/rawdata/cps_00002.dta")
 
@@ -224,7 +225,14 @@ label(covid_score) = as.list(covid_score_labels[match(names(covid_score), names(
 ```
 
 
-```{r Adding primary keys to datasets}
+  As this quarter comes to an end our research and findings culminate in answering three important questions about Covid-19 and its effect on employment. This paper seeks to answer the questions: How has Covid affected the health of the retail industry, how has retail fared to other industries, and who is working and earning money during this crisis. Looking at data from the last three years to get an understanding of employment and industry trends that began before the Covid-19 Global Pandemic this paper will answer these questions considering the various externalities that could also be affecting our data. 
+
+  To begin it is important to investigate what data is being chosen. This paper grabbed all the covid data available, employment data across all sectors, demographics such as race, gender, age, and years of schooling, and information regarding health care and hours worked. It was then that the data was tidied and combined in order to get one dataset in which we could answer the questions at the core of our pursuit. It is important to note here that some data was dropped due to a lack of information from respondents thus the picture of the regression that this paper was hoping to build is not the regression we ended up with. The month of March in 2020 was also dropped as that seemed to be the transition period between the US before Covid and the US after Covid. With an unclear date as to when in March the change was officially made, it seemed best to take March out of the dataset. Thereby, the before Covid numbers end with February 2020 and the After Covid numbers begin with April 2020. This was set up as a binary variable in order to easily control for the before and after time period.  
+  
+  Now that the data that has been chosen has been discussed it is important to note the methodology in which the regressions were chosen and performed. For each regression it includes the binary variable of before and after Covid. To get a preliminary picture at employment, we regressed it against the before and after number. Resulting in an intercept of .4746. Giving us a picture of employment without any outside factors. 
+  
+  
+```{r Adding primary keys to datasets, echo=FALSE}
 employment_df$household_personid <- paste(employment_df$YEAR, employment_df$MONTH, employment_df$SERIAL, employment_df$PERNUM, sep="-")
 
 
@@ -238,18 +246,15 @@ df$household_personid <- paste(df$year, df$month, df$serial, df$pernum, sep="-")
 ```
 
 
-```{r joining datasets }
+```{r joining datasets, echo=FALSE }
 
 employment_displaced_df <- employment_df %>%
   full_join(displ_workers, by = 'household_personid')
 
-
-##vtable(employment_displaced_df)
-
 ```
 
 
-```{r group by month to get a Retail Employment monthly statistic}
+```{r group by month to get a Retail Employment monthly statistic, echo=FALSE, results="hide", include=FALSE}
 
 month_group_df <- employment_displaced_df %>%
   filter(year >= 2018) %>%
@@ -273,34 +278,33 @@ month_group_df <- month_group_df %>%
   group_by(YEAR, MONTH, yearmo) %>% 
   summarise(Employment = sum(employed_binary), Retail = sum(retail_binary),  RetailEmployed = sum(retail_employed_binary)) %>%
   mutate(afterCovid = (yearmo > '2020-3' | yearmo >= '2020-10')) %>%
-  ##month_group_count %>%
   left_join(month_group_count, by =  'yearmo')## %>%
- ## summarise(Retail = sum((retail_binary)))
-  ##still need an percentage in retail)
+ 
 
 month_group_stats <- month_group_df %>%
- ## left_join(month_group_df, by =  'yearmo') %>%
   filter(yearmo != 'NA-NA') %>%
   mutate(employment_rate = (Employment / n)*100 ) %>%
-  ##mutate(retailemployment_rate = ((Retail/Employment)*employment_rate)) %>%
-  ##otherindustryemployement_rate
   mutate(retail_rate = (Retail/n) *100) %>%
   mutate(retailemployment_rate = (RetailEmployed/n) *100) 
   
-#   
-##will need to check if its only employed people with retail jobs  
-```
-
-
-```{r plotting month_group stats pressure, echo=FALSE  }
-ggplot(data = month_group_stats, aes( x= yearmo, y = retailemployment_rate )) + geom_point()
 
 ```
 
 
 
 
-```{r employment_displaced_df}
+```{r plotting month_group stats pressure, echo=FALSE, cache=FALSE, results=FALSE, warning=FALSE, comment=FALSE, warning=FALSE }
+ggplot(data = month_group_stats, aes( x= yearmo, y = retailemployment_rate )) + geom_point()+ 
+  theme(axis.text.x=element_blank()) + labs( x= 'Year-Month', y = 'Industry Employment Rate', title="Retail Employment Rates from 2018 - 2021")
+                                    
+
+
+```
+
+
+
+
+```{r employment_displaced_df, echo=FALSE}
 
 ##Regress Employment on a constant variable 
 ##:Regress employment on NO predictors and just the intercept
@@ -314,59 +318,42 @@ binaryemployedretail_df <- employment_displaced_df %>%
   mutate(retail_binary = ifelse(retail_noNA == TRUE, 1, 0)) %>%
   mutate(retail_employed = employed_binary == 1 & retail_binary == 1) %>%
   mutate(retail_employed_binary = ifelse(retail_employed == TRUE, 1, 0)) ##%>%
-  ##mutate(employment_mean = mean(employed_binary))
 
-
-# dim(binaryemployedretail_df)
-# ##4397806 rows 
-# 
-##binaryemployedretail_groupdf <-  binaryemployedretail_df %>%
-  ##group_by(employed) %>%
-  ##summarise(mutate(employment_mean = mean(employed_binary)))
 
 
 
 mean_employmentregression <- lm(employed_binary ~ 1, data = binaryemployedretail_df)
 
-summary(mean_employmentregression)
+export_summs(mean_employmentregression, model.names = 'Employment Regression' ,digits = 4)
 
 
-ggplot(data = mean_employmentregression, aes( x= employed_binary, y = 1)) + geom_point() + geom_smooth(method= 'lm')
 
-
-##plot_coefs(employment_regression)
-
-##histogram
-
-hist(rstandard(mean_employmentregression), 
-     xlab = "Standardized residuals", main = 'Standardized Residuals of ')
 
 ```
 
-```{r}
+Next, we aimed to answer the first question by now looking at the regression, specifically by looking at the retail industry in comparison to employment. This showed a slightly lower intercept, which makes sense because we are adding in a variable which takes away part of the weight on the intercept. Looking at the coefficient on retail it is .4831, both the coefficient and intercept are considered to be statistically significant at the highest level. This regression provided the general health of the retail industry, which will allow us to properly compare the difference to that time after covid. 
+
+
+
+```{r Employment Regression with Retail, echo=FALSE}
 # 2.	Predict employment rate estimate for retail
 # •	The mean of the average is the unemployment rate
-
-
 
 
 employment_on_retailregression <- lm(employed_binary ~ 1 + retail_noNA, data = binaryemployedretail_df)
 
 
-summary(employment_on_retailregression)
+export_summs(employment_on_retailregression, model.names = 'Employment Regression with Retail Dummy Variable', digits = 4)
 
-
-ggplot(data = employment_on_retailregression, aes( x= employed_binary)) + geom_point() + geom_smooth(method= 'lm')
-
-
-
-hist(rstandard(employment_on_retailregression), 
-     xlab = "Standardized residuals", main = 'Standardized Residuals of ')
 
 
 ```
 
-```{r}
+Now, we get to the nitty gritty. How did retail fare during covid? Adding in the period after Covid and creating an interactive variable we can see the effect of covid on retail measure by employment. It is important to note that all numbers involved in this model are also statistically significant at the highest level, taking particular note of the covid significance which shows that it is highly unlikely the industry would have fared this way without such an effect. We still continue to see a positive retail coefficient but once we add in the interaction of Covid WITH retail we see that it has a negative effect of 0.0115 on overall employment. Clearly, the Covid-19 pandemic had a negative effect on the health of the retail industry. 
+
+
+
+```{r Employment Regression with COVID interation, echo=FALSE}
 # 3.	ADD pre or post COVID interaction term to the model (industry * beforeCOVID) – this will tell how COVID has changed the differences in employment rate by industry
 # o	Better idea to do month interactions instead of pre and post COVID
 
@@ -380,23 +367,21 @@ binaryemployedretailCOVID_df<- binaryemployedretailCOVID_df %>%
 employmentretailregressionCOVID <- lm(employed_binary ~ 1 + (retail_noNA * afterCovid), data = binaryemployedretailCOVID_df)
 
 
-summary(employmentretailregressionCOVID)
+export_summs(employmentretailregressionCOVID,  model.names = 'Employment Regression - Retail Interaction Term with COVID ', digits = 4)
 
 
-ggplot(data = employmentretailregressionCOVID, aes( x= employed_binary, y = (retail_noNA * afterCovid))) + geom_point() + geom_smooth(method= 'lm')
-
-
-
-hist(rstandard(employmentretailregressionCOVID), 
-     xlab = "Standardized residuals", main = 'Standardized Residuals of ')
 
 
 ```
-```{r plotting other industries}
+
+Moving on to answer the next question at hand, it is important to get a fuller picture of the retail industry and how it has fared compared to other industries. Adjusting the regression to add all the other industries, we once again can fill in the gaps of understanding and paint a clearer picture of the effect of Covid on retail. Looking at the regression and sum table we see that practically every coefficient is significant. This is all done in comparison to retail so those with positive intercepts did better as compared to retail while those with negative fared worst. Looking at the transportation industry in particular this coefficient being negative would make sense because it was well documented that public transit and ride hailing apps suffered during the pandemic as people opted for safer alternatives that exposed them to less people. Meanwhile, the financial industry did relatively well compared to retail which is due to the fact that the financial industry was not put on hold or saw the same kind of restraints other industries saw. 
+
+```{r plotting other industries ,echo=FALSE, cache=FALSE, results=FALSE, warning=FALSE, comment=FALSE, warning=FALSE}
  
 otherindustries_df <- employment_displaced_df %>%
   filter(year >= 2018) %>%
   filter(!is.na(indname)) %>%
+  filter(indname != 'Military') %>%
   select(YEAR, MONTH, employed, retail,indname) %>%
   mutate(employed_binary = ifelse(employed == TRUE, 1, 0)) %>%
   mutate(artind = ifelse( indname == "Arts, Entertainment, and Recreation, and Accommodation and Food Services", 1,0))%>%
@@ -405,7 +390,6 @@ otherindustries_df <- employment_displaced_df %>%
   mutate(financeind = ifelse(indname == "Finance and Insurance, and Real Estate and Rental and Leasing", 1,0)) %>%
   mutate(infoind =  ifelse(indname == "Information", 1,0)) %>%
   mutate(mfind =ifelse(indname == "Manufacturing", 1,0)) %>%
-  mutate(militaryind = ifelse(indname == "Military", 1,0)) %>%
   mutate(otherind = ifelse(indname == "Other Services, Except Public Administration", 1,0)) %>%
   mutate(proind =  ifelse(indname == "Professional, Scientific, and Management, and Administrative and Waste Management Services", 1,0)) %>%
   mutate(publicind =  ifelse(indname == "Public Administration", 1,0)) %>%
@@ -419,9 +403,6 @@ otherindustries_df <- employment_displaced_df %>%
 otherindustries_df$yearmo <- paste(otherindustries_df$YEAR, otherindustries_df $MONTH, sep="-")
 
 
-
-otherindustries_df$yearmo <- paste(otherindustries_df$YEAR, otherindustries_df $MONTH, sep="-")
-
   otherindustries_count <- otherindustries_df %>%
 count(indname)
 
@@ -433,7 +414,6 @@ otherindustries_count <- otherindustries_df %>%
             edu_count = sum(eduind),
             finance_count = sum(financeind),
             info_count = sum(infoind),
-            military_count = sum(militaryind),
             other_count = sum(otherind),
             pro_count = sum(proind),
             public_count = sum(publicind),
@@ -451,7 +431,6 @@ otherindustries_df_stats <- otherindustries_count %>%
   mutate(edu_rate = (edu_count / n)*100 ) %>%
   mutate(finance_rate = (finance_count / n)*100 ) %>%
   mutate(info_rate = (info_count / n)*100 ) %>%
-  mutate(military_rate = (military_count / n)*100 ) %>%
   mutate(other_rate = (other_count / n)*100 ) %>%
   mutate(pro_rate = (pro_count / n)*100 ) %>%
   mutate(public_rate = (public_count / n)*100 ) %>%
@@ -465,23 +444,27 @@ otherindustries_df_stats <- otherindustries_count %>%
 
 
 ggplot(data = otherindustries_df_stats, aes( x = yearmo)) +
-                                      geom_point(aes(y = art_rate), color = "darkred") +
-                                      geom_point(aes(y = construction_rate), color = "red") +
-                                      geom_point(aes(y = edu_rate), color = "pink") +
-                                      geom_point(aes(y = finance_rate), color = "orange") +
-                                      geom_point(aes(y = info_rate), color = "yellow") +
-                                      geom_point(aes(y = military_rate), color = "green") +
-                                      geom_point(aes(y = other_rate), color = "blue") +
-                                      geom_point(aes(y = public_rate), color = "purple") +
-                                      geom_point(aes(y = retail_rate), color = "brown") +
-                                      geom_point(aes(y = transport_rate), color = "blueviolet") +
-                                      geom_point(aes(y = ws_rate), color = "gold")
+                                      geom_point(aes(y = art_rate, color = "Art")) +
+                                      geom_point(aes(y = construction_rate, color = "Construction")) +
+                                      geom_point(aes(y = edu_rate, color = "Education")) +
+                                      geom_point(aes(y = finance_rate, color = "Finance")) +
+                                      geom_point(aes(y = info_rate, color = "Information")) +
+                                      geom_point(aes(y = other_rate, color = "Other")) +
+                                      geom_point(aes(y = public_rate, color = "Public")) +
+                                      geom_point(aes(y = retail_rate, color = "Retail")) +
+                                      geom_point(aes(y = transport_rate, color = "Transportation")) +
+                                      geom_point(aes(y = ws_rate, color = "Wholesale")) +
+                                      scale_colour_manual("", breaks = c("Art", "Construction", "Education", "Finance", "Information", "Other", "Public", "Retail", "Transportation", "Wholesale"), values = c("darkred", "red", "pink", "orange","yellow", "blue", "purple", "brown", "blueviolet", "gold")) +
+                                      theme(axis.text.x=element_blank()) +
+                                      labs( x= 'Year-Month', y = 'Industry Employment Rate', title="Industries Employment Rates")
                                     
-                                      
-
+                                    
 ```
 
-```{r Other Industies}
+
+
+
+```{r Other Industies, echo=FALSE}
 # o	Another way to do that is to regress binary indicators for industry
 # 	Intercept – will be employment rate for reference group
 # 	Coefficients – for all others will be the difference in employment rate for all other industries compared to the reference group
@@ -491,17 +474,8 @@ ggplot(data = otherindustries_df_stats, aes( x = yearmo)) +
 otherindustries_df<- otherindustries_df %>%
   mutate(afterCovid = (yearmo > '2020-3' | yearmo >= '2020-10'))
 
-# otherindustriesregressionCOVID <- lm(employed_binary ~ 1 + retail_noNA + afterCovid + artind +
-#                                   constructionind + eduind
-#                                  + financeind + infoind + otherind
-#                                  + proind + publicind + transportind
-#                                  + wsind, data = otherindustries_df)
-# 
-# 
-# summary(otherindustriesregressionCOVID)
 
-
-otherindustriesregressionCOVID <- lm(employed_binary ~ 1 + (retail_noNA * afterCovid) + 
+otherindustriesregressionCOVID <- lm(employed_binary ~ 1 + 
                                     (artind *    afterCovid) +
                                   (constructionind * afterCovid) + (eduind * afterCovid)
                                  + (financeind *  afterCovid)  + (infoind * afterCovid) + 
@@ -511,14 +485,35 @@ otherindustriesregressionCOVID <- lm(employed_binary ~ 1 + (retail_noNA * afterC
                                  + (wsind * afterCovid), data = otherindustries_df)
 
 
-summary(otherindustriesregressionCOVID)
 
-ggplot(data = otherindustriesregressionCOVID, aes( x= employed_binary))) + geom_point() + geom_smooth(method= 'lm')
+export_summs(otherindustriesregressionCOVID, model.names = 'Employment Regression with Other Industries',  digit = 4)
 
-
-
-hist(rstandard(otherindustriesregressionCOVID), 
-     xlab = "Standardized residuals", main = 'Standardized Residuals of ')
 
 
 ```
+
+
+  Finally, we can answer the last question. Who fared well during the Covid-19 pandemic, or at least, who has money to spend? Looking at a regression on demographics including age, race, and education level we see that most people fared well that might be believed. A notable group that fared worse is women, who have a statistically significant coefficient at -0.10. It appears that those who did best during the pandemic is those with an education level resulting in a professional, doctorate, or master’s degree. The coefficients on race are in comparison to those of Asian descent and according to the coefficients those who are white fared the best. So those who fared the best are white men who are highly educated. 
+
+
+```{r Demographics Regression, echo=FALSE}
+
+employment_demographics <- employment_displaced_df %>%
+  filter(year >= 2018) %>%
+  select(YEAR, MONTH,household_personid, employed) %>%
+  mutate(employed_binary = ifelse(employed == TRUE, 1, 0)) %>%
+  inner_join(df, by = 'household_personid')
+  
+employment_demographics$yearmo <- paste(employment_demographics$YEAR, employment_demographics$MONTH, sep="-")
+
+
+employment_demographics <-employment_demographics %>%
+  mutate(afterCovid = (yearmo > '2020-3' | yearmo >= '2020-10'))
+
+demographics_regression = lm(employed_binary ~ female + racialCategories + ageGeneration + highestEducationlevel, data = employment_demographics)
+
+
+export_summs(demographics_regression, model.names = 'Demographics Regression',  digit = 4)
+```
+
+Following this regression, this all makes sense as we look at news reports that state that Women are the most affected by unemployment during the Covid-19 Pandemic or reports that Unemployment numbers are high. Retail Employees work in places that were affected by things like fear of the virus as well as limits on occupancy and there was a surge in online shopping. So much so that places like Amazon that advertise their Prime Two-Day Shipping had to send notices that they could not keep with their newfound demand while managing Covid safety precautions. Looking at the numbers we have found we understand why the retail industry was so affected by the pandemic because it is one that was completely disrupted whereas other industries did not have the most essential part of their business model disturbed. Looking further into the data it leaves us wondering how this can apply in other ways. What types of retail business did worse than others? Did all sectors of the industry fare the same?  The applications of this paper’s findings are certainly limitless.  
